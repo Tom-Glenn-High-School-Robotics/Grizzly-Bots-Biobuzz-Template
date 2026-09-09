@@ -1,9 +1,8 @@
-package org.firstinspires.ftc.teamcode
+package org.firstinspires.ftc.teamcode.teleop
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotor
-import com.qualcomm.robotcore.hardware.DcMotorSimple
 
 @TeleOp(name = "Basic Tank TeleOp", group = "Linear OpMode")
 class MainOpMode : LinearOpMode() {
@@ -20,7 +19,9 @@ class MainOpMode : LinearOpMode() {
         backRight = hardwareMap.get(DcMotor::class.java, "backRight")
 
         frontLeft.direction.inverted()
+        frontRight.direction = frontRight.direction.inverted()
         backLeft.direction.inverted()
+        backRight.direction = backRight.direction.inverted()
 
         telemetry.addData("Status", "Initialized")
         telemetry.update()
@@ -45,6 +46,11 @@ class MainOpMode : LinearOpMode() {
             frontRightPower = frontRightPower.coerceIn(-1.0, 1.0)
             backLeftPower = backLeftPower.coerceIn(-1.0, 1.0)
             backRightPower = backRightPower.coerceIn(-1.0, 1.0)
+
+            frontLeft.power = frontLeftPower
+            frontRight.power = frontRightPower
+            backLeft.power = backLeftPower
+            backRight.power = backRightPower
 
             telemetry.addData("Front Left Pwr", frontLeftPower)
             telemetry.addData("Front Right Pwr", frontRightPower)
