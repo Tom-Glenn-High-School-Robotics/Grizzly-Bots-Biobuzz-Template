@@ -1,3 +1,5 @@
+apply plugin: 'com.android.application'
+
 //
 // build.gradle in TeamCode
 //
@@ -10,42 +12,18 @@
 
 // Custom definitions may go here
 
-// Include common definitions from above.]
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url "https://repo.dairy.foundation/releases"
-        }
-    }
-    dependencies {
-        classpath "dev.frozenmilk:Load:0.2.4"
-    }
-}
-
-plugins {
-    id 'com.android.application' // or id 'com.android.library' depending on your setup
-    id 'org.jetbrains.kotlin.android'
-}
-
+// Include common definitions from above.
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'dev.frozenmilk.sinister.sloth.load'
-
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
-
     kotlinOptions {
         jvmTarget = '1.8'
     }
 
     packagingOptions {
-        jniLibs {
-            pickFirsts += ['**/*.so']
-        }
         jniLibs.useLegacyPackaging true
     }
 }
@@ -69,9 +47,6 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.frozenmilk.sinister:Sloth:0.2.4")
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
-
     implementation project(':FtcRobotController')
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
 
@@ -83,7 +58,9 @@ dependencies {
 
     implementation "com.acmerobotics.dashboard:dashboard:0.5.1" // FTC Dashboard
 
-    // Pedro
+    // Pedro Pathing
+    implementation 'com.pedropathing:revhub:3.0.0'
+    implementation 'com.pedropathing:tuning:1.0.0' // AutoTune (see Tuning.java)
 
     // Panels Dashboard
     implementation "com.bylazar:fullpanels:1.0.12"

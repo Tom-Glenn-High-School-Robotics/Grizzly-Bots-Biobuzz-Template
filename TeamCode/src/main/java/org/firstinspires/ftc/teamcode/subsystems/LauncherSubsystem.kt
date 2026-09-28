@@ -33,11 +33,11 @@ class LauncherSubsystem(
         val currentA = gamepad.getButton(GamepadKeys.Button.A)
 
         if (currentA && !previousA && speed <= 5500) {
-            speed += 500
+            speed += 100
         }
 
         if (currentB && !previousB && speed >= 500) {
-            speed -= 500
+            speed -= 100
         }
 
         previousA = currentA
