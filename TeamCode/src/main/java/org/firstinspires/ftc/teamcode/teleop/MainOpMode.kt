@@ -20,7 +20,7 @@ class MainOpMode : CommandOpMode() {
 
         launcherSubsystem = LauncherSubsystem(hardwareMap, driveGamepad, telemetry)
 
-        launcherSubsystem.speed = 1000.0
+        launcherSubsystem.speed = 0.0
 
         driveSubsystem.defaultCommand = DriveDefaultCommand(driveSubsystem, driveGamepad)
     }
