@@ -5,8 +5,9 @@ import com.seattlesolvers.solverslib.command.SubsystemBase
 import com.seattlesolvers.solverslib.drivebase.MecanumDrive
 import com.seattlesolvers.solverslib.gamepad.GamepadEx
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx
+import org.firstinspires.ftc.robotcore.external.Telemetry
 
-class DriveSubsystem(val hardwareMap: HardwareMap, val gamepad: GamepadEx) : SubsystemBase() {
+class DriveSubsystem(val hardwareMap: HardwareMap, val gamepad: GamepadEx, val telemetry: Telemetry) : SubsystemBase() {
     var frontLeft: MotorEx
     var frontRight: MotorEx
     var backLeft: MotorEx
@@ -25,5 +26,12 @@ class DriveSubsystem(val hardwareMap: HardwareMap, val gamepad: GamepadEx) : Sub
 
     fun drive() {
         drive.driveRobotCentric(-gamepad.leftX, -gamepad.leftY, -gamepad.rightX)
+    }
+
+    override fun periodic() {
+        telemetry.addData("Good 1:", frontRight.velocity)
+        telemetry.addData("Good 2:", frontLeft.velocity)
+        telemetry.addData("Good 3:", backLeft.velocity)
+        telemetry.addData("Bad one:", backRight.velocity)
     }
 }
