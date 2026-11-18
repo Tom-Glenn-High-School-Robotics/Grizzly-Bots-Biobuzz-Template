@@ -6,11 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.seattlesolvers.solverslib.command.SubsystemBase
-import com.seattlesolvers.solverslib.controller.PIDFController
 import com.seattlesolvers.solverslib.gamepad.GamepadEx
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys
-import com.seattlesolvers.solverslib.hardware.motors.Motor
-import com.seattlesolvers.solverslib.hardware.motors.MotorEx
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import kotlin.math.abs
 
@@ -20,7 +17,7 @@ class LauncherSubsystem(
     baseTelemetry: Telemetry
 ) : SubsystemBase() {
 
-    private val launcherMotor: MotorEx = MotorEx(hardwareMap, "launcherMotor")
+    private val rawMotor: DcMotorEx = hardwareMap.get(DcMotorEx::class.java, "launcherMotor")
     val dashboardTelemetry = MultipleTelemetry(baseTelemetry, FtcDashboard.getInstance().telemetry)
 
     var speed: Double = 0.0
@@ -28,10 +25,18 @@ class LauncherSubsystem(
     private var p1PreviousB = false
     private var p1PreviousX = false // this tracks the x button
 
-    private val pidf = PIDFController(LauncherConstants.kP, LauncherConstants.kI, LauncherConstants.kD, LauncherConstants.kF)
+    private var errorSum = 0.0
+    private var lastError = 0.0
 
     init {
-        launcherMotor.setRunMode(Motor.RunMode.RawPower)
+        rawMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
+        rawMotor.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
+    }
+
+    // Allows commands to read the current speed
+    fun getCurrentRpm(): Double {
+        val currentTicksPerSecond = rawMotor.velocity
+        return currentTicksPerSecond * 60.0 / 28.0
     }
 
     override fun periodic() {
@@ -39,33 +44,45 @@ class LauncherSubsystem(
         val p1CurrentA = gamepad.getButton(GamepadKeys.Button.A)
         val p1CurrentX = gamepad.getButton(GamepadKeys.Button.X)
 
-        // this poo poo changes target speed with a and b, or instantly goes to 2600 with x
+        // changes target speed with a and b, or instantly goes to 2600 with x
         if (p1CurrentA && !p1PreviousA && speed <= 5500) speed += 100
         if (p1CurrentB && !p1PreviousB && speed >= 500) speed -= 100
-//        if (p1CurrentX && !p1PreviousX) speed = 2600.0
+        if (p1CurrentX && !p1PreviousX) speed = 2600.0
 
         p1PreviousA = p1CurrentA
         p1PreviousB = p1CurrentB
         p1PreviousX = p1CurrentX
 
+        // FIXED: Restored the missing multiplication (*) sign
         val targetTicksPerSecond = speed * 28.0 / 60.0
-        val currentTicksPerSecond = launcherMotor.velocity
+        val currentTicksPerSecond = rawMotor.velocity
 
-        // Update coefficients in case they were changed via dashboard
-        pidf.setPIDF(LauncherConstants.kP, LauncherConstants.kI, LauncherConstants.kD, LauncherConstants.kF)
+        val error = targetTicksPerSecond - currentTicksPerSecond
 
-        // Calculate power using SolversLib PIDF controller
-        var motorPower = pidf.calculate(currentTicksPerSecond, targetTicksPerSecond)
-
-        // Prevent overshooting: clear total error when outside ~200 RPM of target
-        if (abs(pidf.positionError) >= (200.0 * 28.0 / 60.0)) {
-            pidf.clearTotalError()
+        // Prevent overshooting: only track total error when within ~200 RPM of target
+        // FIXED: Restored the missing multiplication (*) sign
+        if (abs(error) < (200.0 * 28.0 / 60.0)) {
+            errorSum += error
+        } else {
+            errorSum = 0.0
         }
 
+        val derivative = error - lastError
+        lastError = error
+
+        // this pulls your final tuned numbers straight from LauncherConstants
+        val feedforward = targetTicksPerSecond * LauncherConstants.kF
+        val proportional = error * LauncherConstants.kP
+
+        // FIXED: Restored the missing multiplication (*) sign
+        val integral = errorSum * LauncherConstants.kI
+        val derivTerm = derivative * LauncherConstants.kD
+
         // make sure power is clamped between 0 and 1
+        var motorPower = feedforward + proportional + integral + derivTerm
         motorPower = motorPower.coerceIn(0.0, 1.0)
 
-        launcherMotor.set(motorPower)
+        rawMotor.power = motorPower
 
         val actualRpm = currentTicksPerSecond * 60.0 / 28.0
 
